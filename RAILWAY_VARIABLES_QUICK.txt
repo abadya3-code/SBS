@@ -1,0 +1,30 @@
+# Required application variables
+NODE_ENV=production
+HOST=0.0.0.0
+JWT_SECRET=GENERATE_A_RANDOM_SECRET_64_CHARACTERS_OR_LONGER
+REQUEST_BODY_LIMIT=50mb
+STORAGE_REQUIRED=false
+ENABLE_MANUS_RUNTIME=false
+
+# Add as a Railway Reference Variable from the MySQL service
+DATABASE_URL=${{MySQL.MYSQL_URL}}
+
+# First deployment only
+BOOTSTRAP_ADMIN_ON_DEPLOY=true
+ADMIN_NAME=SBTS Administrator
+ADMIN_EMAIL=YOUR_EMAIL
+ADMIN_PASSWORD=CHANGE_TO_A_STRONG_PASSWORD
+ADMIN_EMPLOYEE_NUMBER=SBTS-ADMIN
+
+# After first successful login
+# BOOTSTRAP_ADMIN_ON_DEPLOY=false
+# Delete ADMIN_PASSWORD from Railway Variables
+
+# Optional Railway Storage Bucket references
+# BUCKET=${{Bucket.BUCKET}}
+# ENDPOINT=${{Bucket.ENDPOINT}}
+# ACCESS_KEY_ID=${{Bucket.ACCESS_KEY_ID}}
+# SECRET_ACCESS_KEY=${{Bucket.SECRET_ACCESS_KEY}}
+# REGION=${{Bucket.REGION}}
+# S3_FORCE_PATH_STYLE=true
+# STORAGE_REQUIRED=true
