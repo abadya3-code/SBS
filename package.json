@@ -1,6 +1,6 @@
 {
   "name": "sbts-professional",
-  "version": "2.0.0-beta.4",
+  "version": "2.0.0-beta.4.1",
   "type": "module",
   "license": "MIT",
   "scripts": {
@@ -133,7 +133,12 @@
     },
     "overrides": {
       "tailwindcss>nanoid": "3.3.7"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@tailwindcss/oxide",
+      "core-js",
+      "esbuild"
+    ]
   },
   "engines": {
     "node": ">=22.12.0 <23",
