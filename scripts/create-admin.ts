@@ -1,7 +1,11 @@
 import "dotenv/config";
 import { eq } from "drizzle-orm";
 import { users } from "../drizzle/schema";
-import { createUserWithPassword, getUserByEmail } from "../server/db/auth";
+import {
+  createUserWithPassword,
+  getUserByEmail,
+  updateUserPassword,
+} from "../server/db/auth";
 import { requireDb } from "../server/db/core";
 import { seedAccessControl, seedWorkflows } from "../server/db/seed";
 
@@ -18,11 +22,26 @@ async function main() {
   await seedWorkflows();
   const existing = await getUserByEmail(email);
   if (existing) {
-    const db = await requireDb();
-    await db.update(users).set({ role: "admin", userStatus: "active", name, approvedAt: new Date(), updatedAt: new Date() }).where(eq(users.openId, existing.openId));
-    console.log(`Existing account ${email} promoted to active admin.`);
-    return;
-  }
+  const db = await requireDb();
+
+  await updateUserPassword(existing.openId, password);
+
+  await db
+    .update(users)
+    .set({
+      role: "admin",
+      userStatus: "active",
+      name,
+      approvedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(users.openId, existing.openId));
+
+  console.log(
+    `Existing account ${email} activated as admin and password reset successfully.`,
+  );
+  return;
+}
 
   await createUserWithPassword({
     name,
