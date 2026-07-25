@@ -229,14 +229,14 @@ export function WorkflowOperationsPanel({ projectId, blindTag, runtime, policy, 
         <CardContent className="p-4">{(runtime.evidence ?? []).length ? <div className="space-y-2">{runtime.evidence.map((file: any) => <div key={file.id} className="flex items-center justify-between gap-3 rounded-xl border border-border p-3"><a href={file.fileUrl} target="_blank" rel="noreferrer" className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-foreground">{file.fileName}</p><p className="text-xs text-muted-foreground">{file.category} · {file.mimeType || "file"}</p></a>{permissions.canManageEvidence && <Button variant="ghost" size="icon" aria-label="Remove evidence" disabled={evidenceRemoveMutation.isPending} onClick={() => { if (window.confirm(`Remove ${file.fileName}?`)) evidenceRemoveMutation.mutate({ projectId, blindTag, evidenceId: file.id }); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div>)}</div> : <EmptyState text="No evidence is attached to the current phase." />}</CardContent>
       </Card>}
 
-      <PermitDialog open={editor === "permit"} record={editing} pending={permitMutation.isPending} onClose={close} onSave={(value) => permitMutation.mutate({ ...value, projectId, blindTag })} />
-      <LotoDialog open={editor === "loto"} record={editing} pending={lotoMutation.isPending} onClose={close} onSave={(value) => lotoMutation.mutate({ ...value, projectId, blindTag })} />
-      <GasTestDialog open={editor === "gas"} policy={policy} pending={gasMutation.isPending} onClose={close} onSave={(value) => gasMutation.mutate({ ...value, projectId, blindTag })} />
-      <TorqueDialog open={editor === "torque"} record={editing} policy={policy} permissions={permissions} pending={torqueMutation.isPending} onClose={close} onSave={(value) => torqueMutation.mutate({ ...value, projectId, blindTag })} />
-      <LeakTestDialog open={editor === "leak"} record={editing} pending={leakMutation.isPending} onClose={close} onSave={(value) => leakMutation.mutate({ ...value, projectId, blindTag })} />
-      <EntryReadinessDialog open={editor === "entry"} record={editing} canAuthorize={permissions.canAuthorizeEntry} pending={entryMutation.isPending} onClose={close} onSave={(value) => entryMutation.mutate(value)} />
-      <ApprovalDialog open={editor === "approval"} step={editing} pending={approvalMutation.isPending} onClose={close} onSave={(value) => approvalMutation.mutate({ ...value, projectId, blindTag, roleKey: editing.roleKey })} />
-      <EvidenceDialog open={editor === "evidence"} policy={policy} pending={evidenceUploadMutation.isPending} onClose={close} onSave={(value) => evidenceUploadMutation.mutate({ ...value, projectId, blindTag, phaseKey: runtime.runtime.currentPhaseKey })} />
+      <PermitDialog open={editor === "permit"} record={editing} pending={permitMutation.isPending} onClose={close} onSave={(value: any) => permitMutation.mutate({ ...value, projectId, blindTag })} />
+      <LotoDialog open={editor === "loto"} record={editing} pending={lotoMutation.isPending} onClose={close} onSave={(value: any) => lotoMutation.mutate({ ...value, projectId, blindTag })} />
+      <GasTestDialog open={editor === "gas"} policy={policy} pending={gasMutation.isPending} onClose={close} onSave={(value: any) => gasMutation.mutate({ ...value, projectId, blindTag })} />
+      <TorqueDialog open={editor === "torque"} record={editing} policy={policy} permissions={permissions} pending={torqueMutation.isPending} onClose={close} onSave={(value: any) => torqueMutation.mutate({ ...value, projectId, blindTag })} />
+      <LeakTestDialog open={editor === "leak"} record={editing} pending={leakMutation.isPending} onClose={close} onSave={(value: any) => leakMutation.mutate({ ...value, projectId, blindTag })} />
+      <EntryReadinessDialog open={editor === "entry"} record={editing} canAuthorize={permissions.canAuthorizeEntry} pending={entryMutation.isPending} onClose={close} onSave={(value: any) => entryMutation.mutate(value)} />
+      <ApprovalDialog open={editor === "approval"} step={editing} pending={approvalMutation.isPending} onClose={close} onSave={(value: any) => approvalMutation.mutate({ ...value, projectId, blindTag, roleKey: editing.roleKey })} />
+      <EvidenceDialog open={editor === "evidence"} policy={policy} pending={evidenceUploadMutation.isPending} onClose={close} onSave={(value: any) => evidenceUploadMutation.mutate({ ...value, projectId, blindTag, phaseKey: runtime.runtime.currentPhaseKey })} />
     </div>
   );
 }

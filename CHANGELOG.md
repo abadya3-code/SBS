@@ -1,3 +1,13 @@
+
+## 2.0.0-beta.4.2 — Git/Railway Master Release
+
+- Fixed Railway release validation for local ignored `.env` files.
+- Fixed TypeScript callback typing errors in Inspection and Quality Governance panels.
+- Updated canonical workflow unit tests and isolated registration tests from a live database.
+- Removed optional unresolved analytics placeholders from the production HTML.
+- Added deterministic Railway build/pre-deploy scripts.
+- Added initialized Git metadata workflow and simple Windows update scripts.
+
 # CHANGELOG — SBTS Professional Edition
 
 > سجل تاريخي لجميع مراحل تطوير نظام تتبع الستائر الذكي (SBTS).

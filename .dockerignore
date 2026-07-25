@@ -11,3 +11,6 @@ docs
 .env.*
 !.env.example
 *.log
+
+*.cmd
+*.ps1

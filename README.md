@@ -1,3 +1,7 @@
+# SBTS Master — GitHub & Railway Ready
+
+Open `START_HERE_AR.md`. This package includes initialized Git metadata and one-time/future update scripts for the existing `abadya3-code/SBS` repository.
+
 # SBTS — Smart Blind Tag System
 
 نظام متكامل لإدارة أعمال **Blinding / De-blinding** في الخزانات والأوعية والمعدات، مع Workflow هندسي، PTW/LOTO، Gas Test، Torque، Inspection، Defect/Punch/NDT، الموافقات والشهادات.

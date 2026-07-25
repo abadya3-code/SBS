@@ -36,7 +36,7 @@ export function InspectionActivityBuilder() {
           </div>
         ))}
       </CardContent>
-      <ActivityDialog open={open} record={editing} pending={mutation.isPending} onClose={() => { setOpen(false); setEditing(null); }} onSave={(value) => mutation.mutate(value)} />
+      <ActivityDialog open={open} record={editing} pending={mutation.isPending} onClose={() => { setOpen(false); setEditing(null); }} onSave={(value: any) => mutation.mutate(value)} />
     </Card>
   );
 }

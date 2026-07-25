@@ -2,9 +2,17 @@
  * Vitest tests for Registration & Approval procedures
  * Tests: completeRegistration, pendingUsers, approveUser, rejectUser
  */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+
+vi.mock("./db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./db")>();
+  return {
+    ...actual,
+    getPendingUsers: vi.fn().mockResolvedValue([]),
+  };
+});
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 

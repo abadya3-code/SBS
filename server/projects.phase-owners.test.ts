@@ -85,6 +85,7 @@ describe("projects phase-owner procedures", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    dbMock.canUserEditProjectPhase.mockResolvedValue(true);
     dbMock.getProjectDetail.mockResolvedValue({
       project: { id: "PRJ-1027" },
       blinds: [{ ...validBlindInput, phase: "Assembly", updatedAt: new Date() }],
@@ -129,8 +130,7 @@ describe("projects phase-owner procedures", () => {
     expect(dbMock.bulkAddBlindsToProject).not.toHaveBeenCalled();
   });
 
-  it("checks both the existing phase and the target phase when updating a blind", async () => {
-    dbMock.canUserEditProjectPhase.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+  it("blocks direct phase changes and requires the canonical workflow action", async () => {
     const caller = appRouter.createCaller(createUserContext());
 
     await expect(caller.projects.updateBlind({
@@ -138,7 +138,7 @@ describe("projects phase-owner procedures", () => {
       tag: "BLD-9001",
       phase: "Final Tight",
       owner: "QC Inspector",
-    })).rejects.toThrow("Only the configured phase owner can update this blind or move it to another phase.");
+    })).rejects.toThrow("Direct phase changes are disabled. Use the canonical workflow action in Blind Detail.");
     expect(dbMock.updateBlindInProject).not.toHaveBeenCalled();
   });
 
@@ -173,23 +173,16 @@ describe("projects phase-owner procedures", () => {
     ], "operator-open-id", true);
   });
 
-  it("blocks Slip Blind creation when the project gate is active and mandatory confirmations are missing", async () => {
+  it("allows Slip Blind registration and defers conditional approval to the final workflow", async () => {
     dbMock.getProjectSettings.mockResolvedValue({ projectId: "PRJ-1027", slipBlindGateRequired: true, phaseOwners: [] });
-    dbMock.canUserEditProjectPhase.mockResolvedValue(true);
-    const caller = appRouter.createCaller(createUserContext());
-
-    await expect(caller.projects.addBlind(validBlindInput)).rejects.toThrow("Slip Blind requires Foreman Metal approval and merged confirmation while this project setting is active.");
-    expect(dbMock.addBlindToProject).not.toHaveBeenCalled();
-  });
-
-  it("allows Slip Blind creation without confirmations when the project gate is disabled", async () => {
-    dbMock.getProjectSettings.mockResolvedValue({ projectId: "PRJ-1027", slipBlindGateRequired: false, phaseOwners: [] });
-    dbMock.canUserEditProjectPhase.mockResolvedValue(true);
     const caller = appRouter.createCaller(createUserContext());
 
     await caller.projects.addBlind(validBlindInput);
 
-    expect(dbMock.addBlindToProject).toHaveBeenCalledWith(expect.objectContaining({ ...validBlindInput, slipMetalForemanApproved: false, slipBlindMerged: false }), expect.objectContaining({ openId: "operator-open-id" }));
+    expect(dbMock.addBlindToProject).toHaveBeenCalledWith(
+      validBlindInput,
+      expect.objectContaining({ openId: "operator-open-id" }),
+    );
   });
 
   it("returns the dedicated blind detail contract for the Details page", async () => {

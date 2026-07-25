@@ -1,6 +1,6 @@
 {
   "name": "sbts-professional",
-  "version": "2.0.0-beta.4.1",
+  "version": "2.0.0-beta.4.2",
   "type": "module",
   "license": "MIT",
   "scripts": {
@@ -26,7 +26,9 @@
     "staging:smoke": "node scripts/sprint4-staging-smoke.mjs",
     "db:migrate:drizzle": "drizzle-kit migrate",
     "db:migrate:domain": "tsx scripts/apply-sbts-domain-migrations.ts",
-    "release:check": "node scripts/verify-release.mjs"
+    "release:check": "node scripts/verify-release.mjs",
+    "railway:build": "pnpm release:check && pnpm install --frozen-lockfile && pnpm build",
+    "railway:predeploy": "pnpm db:migrate && if [ \"${BOOTSTRAP_ADMIN_ON_DEPLOY:-false}\" = \"true\" ]; then pnpm admin:create; fi"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
