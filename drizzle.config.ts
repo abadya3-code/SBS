@@ -1,15 +1,17 @@
+import "dotenv/config";
 import { defineConfig } from "drizzle-kit";
+import { getDatabaseUrl } from "./server/_core/databaseUrl";
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error("DATABASE_URL is required to run drizzle commands");
-}
+const connectionString = getDatabaseUrl(process.env.DATABASE_URL, {
+  required: true,
+  production: process.env.NODE_ENV === "production",
+});
 
 export default defineConfig({
   schema: "./drizzle/schema.ts",
   out: "./drizzle",
   dialect: "mysql",
   dbCredentials: {
-    url: connectionString,
+    url: connectionString!,
   },
 });

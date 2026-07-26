@@ -21,9 +21,11 @@ import { ENV } from "../_core/env";
 import { sdk } from "../_core/sdk";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import {
+  clearFailedLogin,
   createUserWithPassword,
   getSecuritySettings,
   getUserByEmail,
+  recordFailedLogin,
   updateUserPassword,
   verifyPassword,
 } from "../db";
@@ -37,7 +39,7 @@ import { getUserByOpenId, upsertUser } from "../db/core";
  */
 async function validatePasswordPolicy(password: string): Promise<void> {
   const security = await getSecuritySettings();
-  const minLength = security.minPasswordLength || 8;
+  const minLength = security.minPasswordLength || 12;
   if (password.length < minLength) {
     throw new TRPCError({
       code: "BAD_REQUEST",
@@ -102,11 +104,28 @@ export const authRouter = router({
         });
       }
 
+      const security = await getSecuritySettings();
+      const now = new Date();
+      if (user.lockedUntil && new Date(user.lockedUntil).getTime() > now.getTime()) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "This account is temporarily locked after repeated failed login attempts. Try again later or contact an administrator.",
+        });
+      }
+
       const isValid = await verifyPassword(input.password, user.passwordHash);
       if (!isValid) {
+        const failure = await recordFailedLogin(
+          user.openId,
+          user.failedLoginAttempts ?? 0,
+          security.maxLoginAttempts || 5,
+          security.lockoutDurationMinutes || 15,
+        );
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Invalid email or password",
+          code: failure.lockedUntil ? "TOO_MANY_REQUESTS" : "UNAUTHORIZED",
+          message: failure.lockedUntil
+            ? "This account has been temporarily locked after repeated failed login attempts."
+            : "Invalid email or password",
         });
       }
 
@@ -124,7 +143,8 @@ export const authRouter = router({
         });
       }
 
-      // Update last sign-in timestamp
+      // Reset lockout counters and update last sign-in timestamp.
+      await clearFailedLogin(user.openId);
       await upsertUser({ openId: user.openId, lastSignedIn: new Date() });
 
       // Get session duration from Security Settings

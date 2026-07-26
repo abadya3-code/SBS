@@ -8,19 +8,24 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { ENV } from "../_core/env";
+import { getDatabaseUrl } from "../_core/databaseUrl";
 import { InsertUser, users } from "../../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
 /** Lazily create the drizzle instance so local tooling can run without a DB. */
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
-    }
+  if (_db) return _db;
+  const databaseUrl = getDatabaseUrl(process.env.DATABASE_URL, {
+    required: false,
+    production: process.env.NODE_ENV === "production",
+  });
+  if (!databaseUrl) return null;
+  try {
+    _db = drizzle(databaseUrl);
+  } catch (error) {
+    console.error("[Database] Failed to initialize connection:", error);
+    _db = null;
   }
   return _db;
 }

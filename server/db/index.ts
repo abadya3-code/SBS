@@ -141,9 +141,11 @@ export {
 
 // Auth (standalone email/password)
 export {
+  clearFailedLogin,
   createUserWithPassword,
   getUserByEmail,
   hashPassword,
+  recordFailedLogin,
   updateUserPassword,
   verifyPassword,
 } from "./auth";

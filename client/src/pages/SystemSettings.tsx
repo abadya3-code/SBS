@@ -575,7 +575,7 @@ function DefaultTagSettingsTab() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-wide text-slate-500">Width (mm)</Label>
-              <Input type="number" min={40} max={200} value={form.tagWidth} onChange={e => setForm(f => f && ({ ...f, tagWidth: parseInt(e.target.value) || 85 }))} className="sbts-input" />
+              <Input type="number" min={40} max={200} value={form.tagWidth} onChange={e => setForm(f => f && ({ ...f, tagWidth: parseInt(e.target.value) || 125 }))} className="sbts-input" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-wide text-slate-500">Height (mm)</Label>
@@ -1139,7 +1139,7 @@ function SecuritySettingsTab() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-wide text-slate-500">Min Password Length</Label>
-              <Input type="number" min={6} max={32} value={form.minPasswordLength} onChange={e => setForm(f => f && ({ ...f, minPasswordLength: parseInt(e.target.value) || 8 }))} className="sbts-input" />
+              <Input type="number" min={8} max={64} value={form.minPasswordLength} onChange={e => setForm(f => f && ({ ...f, minPasswordLength: parseInt(e.target.value) || 12 }))} className="sbts-input" />
             </div>
           </div>
           <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">

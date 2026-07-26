@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { randomUUID } from "node:crypto";
 import express from "express";
 import { createServer } from "http";
 import { sql } from "drizzle-orm";
@@ -9,12 +10,38 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { getDb } from "../db/core";
 import { getStorageBackend } from "../storage";
+import { getDatabaseUrl } from "./databaseUrl";
+import { ENV } from "./env";
+
+const APP_VERSION = process.env.APP_VERSION?.trim() || "2.1.0";
 
 function validateEnvironment() {
-  if (!process.env.DATABASE_URL?.trim()) throw new Error("DATABASE_URL is required.");
-  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) throw new Error("JWT_SECRET must contain at least 32 characters.");
+  getDatabaseUrl(process.env.DATABASE_URL, {
+    required: true,
+    production: process.env.NODE_ENV === "production",
+  });
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    throw new Error("JWT_SECRET must contain at least 32 characters.");
+  }
+  if (!ENV.appId) throw new Error("VITE_APP_ID must not be empty.");
+  if (ENV.oAuthEnabled && !ENV.oAuthServerUrl) {
+    throw new Error("ENABLE_OAUTH=true requires OAUTH_SERVER_URL.");
+  }
   const storageRequired = process.env.STORAGE_REQUIRED === "true";
   if (process.env.NODE_ENV === "production" && storageRequired) getStorageBackend();
+}
+
+function applySecurityHeaders(app: express.Express) {
+  app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    if (ENV.isProduction) {
+      res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    }
+    next();
+  });
 }
 
 async function startServer() {
@@ -23,21 +50,38 @@ async function startServer() {
   const server = createServer(app);
   const startedAt = new Date();
 
+  // Railway and most reverse proxies terminate TLS before forwarding requests.
+  app.set("trust proxy", 1);
   app.disable("x-powered-by");
-  app.use(express.json({ limit: process.env.REQUEST_BODY_LIMIT || "50mb" }));
-  app.use(express.urlencoded({ limit: process.env.REQUEST_BODY_LIMIT || "50mb", extended: true }));
+  applySecurityHeaders(app);
 
-  // Railway health checks must not depend on authentication or the frontend bundle.
+  app.use((req, res, next) => {
+    const requestId = String(req.headers["x-request-id"] || randomUUID());
+    res.setHeader("X-Request-Id", requestId);
+    (req as express.Request & { requestId?: string }).requestId = requestId;
+    next();
+  });
+
+  app.use(express.json({ limit: process.env.REQUEST_BODY_LIMIT || "50mb" }));
+  app.use(
+    express.urlencoded({
+      limit: process.env.REQUEST_BODY_LIMIT || "50mb",
+      extended: true,
+    }),
+  );
+
+  // Liveness: Railway uses this endpoint to switch traffic to a new revision.
   app.get("/health", (_req, res) => {
     res.status(200).json({
       status: "ok",
       service: "sbts-professional",
-      version: process.env.npm_package_version || "2.0.0-beta.4",
+      version: APP_VERSION,
       startedAt: startedAt.toISOString(),
       uptimeSeconds: Math.floor(process.uptime()),
     });
   });
 
+  // Readiness: operational checks and smoke tests can verify database access.
   app.get("/ready", async (_req, res) => {
     try {
       const db = await getDb();
@@ -60,8 +104,13 @@ async function startServer() {
     createExpressMiddleware({
       router: appRouter,
       createContext,
-      onError({ error, path }) {
-        console.error(`[tRPC] ${path ?? "unknown"}:`, error.message);
+      onError({ error, path, ctx }) {
+        const requestId = (ctx?.req as express.Request & { requestId?: string })
+          ?.requestId;
+        console.error(
+          `[tRPC] requestId=${requestId ?? "unknown"} path=${path ?? "unknown"}:`,
+          error.message,
+        );
       },
     }),
   );
@@ -73,11 +122,15 @@ async function startServer() {
   }
 
   const port = Number.parseInt(process.env.PORT || "3000", 10);
-  if (!Number.isFinite(port) || port <= 0) throw new Error("PORT must be a valid positive integer.");
+  if (!Number.isFinite(port) || port <= 0) {
+    throw new Error("PORT must be a valid positive integer.");
+  }
   const host = process.env.HOST || "0.0.0.0";
 
   server.listen(port, host, () => {
-    console.log(`SBTS server listening on http://${host}:${port}`);
+    console.log(
+      `SBTS ${APP_VERSION} listening on http://${host}:${port} (appId=${ENV.appId})`,
+    );
   });
 
   const shutdown = (signal: string) => {

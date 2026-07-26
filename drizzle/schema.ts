@@ -14,7 +14,7 @@ export const users = mysqlTable("users", {
   /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
-  email: varchar("email", { length: 320 }),
+  email: varchar("email", { length: 320 }).unique(),
   avatarUrl: text("avatarUrl"),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
@@ -29,6 +29,9 @@ export const users = mysqlTable("users", {
   approvedAt: timestamp("approvedAt"),
   /** Hashed password for standalone auth (bcrypt). Null for OAuth-only users. */
   passwordHash: text("passwordHash"),
+  failedLoginAttempts: int("failedLoginAttempts").default(0).notNull(),
+  lockedUntil: timestamp("lockedUntil"),
+  passwordChangedAt: timestamp("passwordChangedAt"),
   /** Profile fields */
   bio: text("bio"),
   phone: varchar("phone", { length: 40 }),
@@ -1071,7 +1074,7 @@ export const securitySettings = mysqlTable("security_settings", {
   maxLoginAttempts: int("maxLoginAttempts").default(5).notNull(),
   lockoutDurationMinutes: int("lockoutDurationMinutes").default(15).notNull(),
   requireStrongPassword: int("requireStrongPassword").default(1).notNull(),
-  minPasswordLength: int("minPasswordLength").default(8).notNull(),
+  minPasswordLength: int("minPasswordLength").default(12).notNull(),
   updatedByOpenId: varchar("updatedByOpenId", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

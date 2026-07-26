@@ -1,6 +1,6 @@
 {
   "name": "sbts-professional",
-  "version": "2.0.0-beta.4.3",
+  "version": "2.1.0",
   "type": "module",
   "license": "MIT",
   "scripts": {
@@ -12,7 +12,7 @@
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "baseline": "node scripts/sprint0-baseline.mjs",
-    "verify": "pnpm baseline && pnpm sprint2:verify && pnpm sprint3:verify && pnpm sprint4:verify && pnpm check && pnpm test && pnpm build",
+    "verify": "pnpm baseline && pnpm sprint2:verify && pnpm sprint3:verify && pnpm sprint4:verify && pnpm sprint5:verify && pnpm check && pnpm test && pnpm build",
     "sprint2:verify": "node scripts/sprint2-verify.mjs && node scripts/sprint2-sql-validate.mjs && node scripts/typescript-syntax-check.mjs",
     "sprint2:sql": "node scripts/sprint2-sql-validate.mjs",
     "syntax:check": "node scripts/typescript-syntax-check.mjs",
@@ -28,7 +28,12 @@
     "db:migrate:domain": "tsx scripts/apply-sbts-domain-migrations.ts",
     "release:check": "node scripts/verify-release.mjs",
     "railway:build": "pnpm release:check && pnpm build",
-    "railway:predeploy": "pnpm db:migrate && if [ \"${BOOTSTRAP_ADMIN_ON_DEPLOY:-false}\" = \"true\" ]; then pnpm admin:create; fi"
+    "railway:predeploy": "pnpm deploy:check && pnpm db:migrate && if [ \"${BOOTSTRAP_ADMIN_ON_DEPLOY:-false}\" = \"true\" ]; then pnpm admin:create; fi && pnpm doctor",
+    "deploy:check": "tsx scripts/validate-deployment-env.ts",
+    "admin:reset": "pnpm admin:create",
+    "sprint5:verify": "node scripts/sprint5-verify.mjs && node scripts/sprint5-sql-validate.mjs && node scripts/typescript-syntax-check.mjs",
+    "doctor": "tsx scripts/production-doctor.ts",
+    "sprint5:sql": "node scripts/sprint5-sql-validate.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",

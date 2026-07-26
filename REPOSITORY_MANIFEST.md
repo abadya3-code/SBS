@@ -1,340 +1,45 @@
-# SBTS Repository Manifest
+# SBTS 2.1 Repository Manifest
 
-Generated for GitHub/Railway upload.
+## Release identity
+
+- Package: `sbts-professional`
+- Version: `2.1.0`
+- Runtime: Node.js 22
+- Package manager: pnpm 10.4.1
+- Database: MySQL 8 / TiDB
+- Deployment: Dockerfile + Railway Config-as-Code
+
+## Critical files
+
+| File | Purpose |
+|---|---|
+| `Dockerfile` | Reproducible, non-root build/runtime image |
+| `railway.json` | Railway builder, pre-deploy, start and healthcheck |
+| `package.json` | Locked commands and deployment pipeline |
+| `server/_core/databaseUrl.ts` | Safe hosted database URL validation |
+| `server/_core/env.ts` | Central runtime configuration |
+| `server/_core/sdk.ts` | JWT session signing and verification |
+| `server/routers/auth.ts` | Email/password login, lockout and password management |
+| `scripts/create-admin.ts` | Idempotent admin create/reset |
+| `scripts/production-doctor.ts` | DB/admin/password/session readiness proof |
+| `scripts/apply-sbts-domain-migrations.ts` | Resumable domain migrations |
+| `drizzle/0017_sprint5_auth_deployment_hardening.sql` | Auth hardening migration |
+| `.github/workflows/ci.yml` | GitHub typecheck, tests and build |
+
+## Excluded from the release
+
+- `.git`
+- `.env`
+- `node_modules`
+- `dist`
+- coverage/logs/IDE files
+- production credentials
+
+## Update model
 
 ```text
-.dockerignore
-.env.example
-.gitattributes
-.github/workflows/ci.yml
-.gitignore
-.node-version
-.nvmrc
-.prettierignore
-.prettierrc
-.railwayignore
-01_UPLOAD_TO_GITHUB.cmd
-01_UPLOAD_TO_GITHUB.ps1
-02_LOCAL_START.cmd
-02_LOCAL_START.ps1
-ARCHITECTURE.md
-CHANGELOG.md
-DEPLOY_GITHUB_RAILWAY_AR.md
-LICENSE
-RAILWAY_VARIABLES_QUICK.txt
-README.md
-SBTS_LOCAL_AND_RAILWAY_DEPLOYMENT.md
-SBTS_Sprint4_Staging_UAT_Checklist.md
-START_HERE.md
-TESTING_AND_MAINTENANCE.md
-VERSION
-client/index.html
-client/public/.gitkeep
-client/src/App.tsx
-client/src/_core/hooks/useAuth.ts
-client/src/components/AIChatBox.tsx
-client/src/components/DashboardLayout.tsx
-client/src/components/DashboardLayoutSkeleton.tsx
-client/src/components/ErrorBoundary.tsx
-client/src/components/ManusDialog.tsx
-client/src/components/Map.tsx
-client/src/components/access-control/PermissionMatrix.tsx
-client/src/components/blinds/BlindDetailSheet.tsx
-client/src/components/blinds/SurveyDialog.tsx
-client/src/components/common/PageHeader.tsx
-client/src/components/dashboard/BlindsRegistry.tsx
-client/src/components/dashboard/MetricsCards.tsx
-client/src/components/dashboard/ProjectHeader.tsx
-client/src/components/dashboard/QuickActions.tsx
-client/src/components/dashboard/RecentActivity.tsx
-client/src/components/dashboard/WorkflowPhases.tsx
-client/src/components/dashboard/__tests__/blinds-registry-advanced.test.ts
-client/src/components/dashboard/__tests__/dashboard.test.ts
-client/src/components/layout/AppShell.tsx
-client/src/components/notifications/NotificationBell.tsx
-client/src/components/profile/ActivityTimeline.tsx
-client/src/components/reports/BlindsDetailedReport.tsx
-client/src/components/reports/ExportDialog.tsx
-client/src/components/reports/ProjectSummaryReport.tsx
-client/src/components/reports/ReportTemplate.tsx
-client/src/components/reports/StatisticsReport.tsx
-client/src/components/reports/WorkflowPhasesReport.tsx
-client/src/components/reports/__tests__/reports.test.ts
-client/src/components/settings/CertificateQualitySettings.tsx
-client/src/components/settings/InspectionActivityBuilder.tsx
-client/src/components/theme/ThemeToggle.tsx
-client/src/components/ui/accordion.tsx
-client/src/components/ui/alert-dialog.tsx
-client/src/components/ui/alert.tsx
-client/src/components/ui/aspect-ratio.tsx
-client/src/components/ui/avatar.tsx
-client/src/components/ui/badge.tsx
-client/src/components/ui/breadcrumb.tsx
-client/src/components/ui/button-group.tsx
-client/src/components/ui/button.tsx
-client/src/components/ui/calendar.tsx
-client/src/components/ui/card.tsx
-client/src/components/ui/carousel.tsx
-client/src/components/ui/chart.tsx
-client/src/components/ui/checkbox.tsx
-client/src/components/ui/collapsible.tsx
-client/src/components/ui/command.tsx
-client/src/components/ui/context-menu.tsx
-client/src/components/ui/dialog.tsx
-client/src/components/ui/drawer.tsx
-client/src/components/ui/dropdown-menu.tsx
-client/src/components/ui/empty.tsx
-client/src/components/ui/field.tsx
-client/src/components/ui/form.tsx
-client/src/components/ui/hover-card.tsx
-client/src/components/ui/input-group.tsx
-client/src/components/ui/input-otp.tsx
-client/src/components/ui/input.tsx
-client/src/components/ui/item.tsx
-client/src/components/ui/kbd.tsx
-client/src/components/ui/label.tsx
-client/src/components/ui/menubar.tsx
-client/src/components/ui/navigation-menu.tsx
-client/src/components/ui/pagination.tsx
-client/src/components/ui/popover.tsx
-client/src/components/ui/progress.tsx
-client/src/components/ui/radio-group.tsx
-client/src/components/ui/resizable.tsx
-client/src/components/ui/scroll-area.tsx
-client/src/components/ui/select.tsx
-client/src/components/ui/separator.tsx
-client/src/components/ui/sheet.tsx
-client/src/components/ui/sidebar.tsx
-client/src/components/ui/skeleton.tsx
-client/src/components/ui/slider.tsx
-client/src/components/ui/sonner.tsx
-client/src/components/ui/spinner.tsx
-client/src/components/ui/switch.tsx
-client/src/components/ui/table.tsx
-client/src/components/ui/tabs.tsx
-client/src/components/ui/textarea.tsx
-client/src/components/ui/toggle-group.tsx
-client/src/components/ui/toggle.tsx
-client/src/components/ui/tooltip.tsx
-client/src/components/workflow/CertificateGovernancePanel.tsx
-client/src/components/workflow/InspectionActivitiesPanel.tsx
-client/src/components/workflow/QualityGovernancePanel.tsx
-client/src/components/workflow/WorkflowOperationsPanel.tsx
-client/src/const.ts
-client/src/contexts/ThemeContext.tsx
-client/src/hooks/useCertificateSettings.ts
-client/src/hooks/useComposition.ts
-client/src/hooks/useMobile.tsx
-client/src/hooks/usePersistFn.ts
-client/src/index.css
-client/src/lib/mockData.ts
-client/src/lib/trpc.ts
-client/src/lib/utils.ts
-client/src/lib/workflowOrdering.ts
-client/src/main.tsx
-client/src/pages/AccessControl.tsx
-client/src/pages/Approve.tsx
-client/src/pages/Areas.tsx
-client/src/pages/AuditLogs.tsx
-client/src/pages/BlindCertificate.tsx
-client/src/pages/BlindDetail.tsx
-client/src/pages/BlindDetailHub.tsx
-client/src/pages/Blinds.tsx
-client/src/pages/CertificateVerification.tsx
-client/src/pages/Dashboard.tsx
-client/src/pages/Home.tsx
-client/src/pages/IsolationPackages.tsx
-client/src/pages/Login.tsx
-client/src/pages/NotFound.tsx
-client/src/pages/Notifications.tsx
-client/src/pages/ProjectDetail.tsx
-client/src/pages/Projects.tsx
-client/src/pages/Register.tsx
-client/src/pages/Reports.tsx
-client/src/pages/SystemSettings.tsx
-client/src/pages/UserManagement.tsx
-client/src/pages/UserProfile.tsx
-client/src/pages/WorkflowStudio.tsx
-client/src/themes/index.ts
-client/src/themes/modern.ts
-client/src/themes/sapClean.ts
-client/src/themes/sbtsCustom.ts
-client/src/themes/themes.css
-components.json
-docker-compose.local.yml
-docs/SBTS_LOCAL_AND_RAILWAY_DEPLOYMENT.md
-docs/SBTS_Sprint4_Acceptance_Checklist.md
-docs/SBTS_Sprint4_DELIVERY.md
-docs/SBTS_Sprint4_Data_Linkage_Map.md
-docs/SBTS_Sprint4_Implementation_Report.md
-docs/SBTS_Sprint4_Staging_Runbook.md
-docs/SBTS_Sprint4_Staging_UAT_Checklist.md
-docs/SBTS_Sprint4_Verification_Report.md
-docs/history/DATA_LINKAGE_MAP.md
-docs/history/SBTS_WORKFLOW_SPECIFICATION_V1.md
-docs/history/SPRINT0_BASELINE_REPORT.md
-docs/history/SPRINT0_SPRINT1_IMPLEMENTATION_REPORT.md
-docs/history/SPRINT1_ACCEPTANCE_CHECKLIST.md
-docs/history/SPRINT2_ACCEPTANCE_CHECKLIST.md
-docs/history/SPRINT2_DATABASE_MIGRATION_RUNBOOK.md
-docs/history/SPRINT2_DATA_LINKAGE_MAP.md
-docs/history/SPRINT2_DELIVERY.md
-docs/history/SPRINT2_IMPLEMENTATION_REPORT.md
-docs/history/SPRINT2_STATE_MACHINE_SPEC.md
-docs/history/SPRINT3_ACCEPTANCE_CHECKLIST.md
-docs/history/SPRINT3_DATA_LINKAGE_MAP.md
-docs/history/SPRINT3_DELIVERY.md
-docs/history/SPRINT3_IMPLEMENTATION_REPORT.md
-docs/history/SPRINT3_STAGING_RUNBOOK.md
-docs/history/SPRINT3_VERIFICATION_REPORT.md
-drizzle/0000_romantic_jack_murdock.sql
-drizzle/0001_gifted_mach_iv.sql
-drizzle/0002_chilly_snowbird.sql
-drizzle/0003_silly_vengeance.sql
-drizzle/0004_flippant_franklin_richards.sql
-drizzle/0005_stormy_ma_gnuci.sql
-drizzle/0006_good_sugar_man.sql
-drizzle/0007_fair_gorilla_man.sql
-drizzle/0008_oval_captain_marvel.sql
-drizzle/0009_typical_random.sql
-drizzle/0010_mushy_wrecking_crew.sql
-drizzle/0011_modern_microchip.sql
-drizzle/0012_fancy_blockbuster.sql
-drizzle/0013_sprint0_sprint1_foundation.sql
-drizzle/0014_sprint2_workflow_runtime.sql
-drizzle/0015_sprint3_vertical_integration.sql
-drizzle/0016_sprint4_certificate_quality_governance.sql
-drizzle/meta/0000_snapshot.json
-drizzle/meta/0001_snapshot.json
-drizzle/meta/0002_snapshot.json
-drizzle/meta/0003_snapshot.json
-drizzle/meta/0004_snapshot.json
-drizzle/meta/0005_snapshot.json
-drizzle/meta/0006_snapshot.json
-drizzle/meta/0007_snapshot.json
-drizzle/meta/0008_snapshot.json
-drizzle/meta/0009_snapshot.json
-drizzle/meta/0010_snapshot.json
-drizzle/meta/0011_snapshot.json
-drizzle/meta/0012_snapshot.json
-drizzle/meta/_journal.json
-drizzle/migrations/.gitkeep
-drizzle/relations.ts
-drizzle/schema.ts
-drizzle.config.ts
-package.json
-patches/wouter@3.7.1.patch
-pnpm-lock.yaml
-railway.json
-references/certificate-design-notes.md
-scripts/apply-sbts-domain-migrations.ts
-scripts/create-admin.mjs
-scripts/create-admin.ts
-scripts/sprint0-baseline.mjs
-scripts/sprint2-sql-validate.mjs
-scripts/sprint2-verify.mjs
-scripts/sprint3-sql-validate.mjs
-scripts/sprint3-verify.mjs
-scripts/sprint4-sql-validate.mjs
-scripts/sprint4-staging-e2e.ts
-scripts/sprint4-staging-smoke.mjs
-scripts/sprint4-verify.mjs
-scripts/typescript-syntax-check.mjs
-scripts/verify-release.mjs
-server/_core/context.ts
-server/_core/cookies.ts
-server/_core/dataApi.ts
-server/_core/env.ts
-server/_core/imageGeneration.ts
-server/_core/index.ts
-server/_core/llm.ts
-server/_core/map.ts
-server/_core/notification.ts
-server/_core/oauth.ts
-server/_core/sdk.ts
-server/_core/storageProxy.ts
-server/_core/systemRouter.ts
-server/_core/trpc.ts
-server/_core/types/cookie.d.ts
-server/_core/types/manusTypes.ts
-server/_core/vite.ts
-server/_core/voiceTranscription.ts
-server/areas.projects.contract.test.ts
-server/auditLogs.test.ts
-server/auth.logout.test.ts
-server/auth.standalone.test.ts
-server/blindBulkPaste.test.ts
-server/blindEquipment.mapper.test.ts
-server/db/auditLogs.ts
-server/db/auth.ts
-server/db/blinds.ts
-server/db/certificateGovernance.ts
-server/db/core.ts
-server/db/featureToggles.ts
-server/db/gasTestPolicy.ts
-server/db/index.ts
-server/db/inspectionActivities.ts
-server/db/notifications.ts
-server/db/profile.ts
-server/db/projects.ts
-server/db/qualityGovernance.ts
-server/db/reports.ts
-server/db/seed.ts
-server/db/settings.ts
-server/db/slipBlinds.ts
-server/db/types.ts
-server/db/users.ts
-server/db/workflowRecords.ts
-server/db/workflowRuntime.ts
-server/db/workflows.ts
-server/db.ts
-server/electronicApprovals.test.ts
-server/featureToggles.test.ts
-server/index.ts
-server/notifications.test.ts
-server/pdf.exports.test.ts
-server/profile.test.ts
-server/projectPhaseOwners.assignment.test.ts
-server/projects.phase-owners.test.ts
-server/registration.test.ts
-server/reports.test.ts
-server/routers/access-control.ts
-server/routers/areas.ts
-server/routers/auditLogs.ts
-server/routers/auth.ts
-server/routers/certificates.ts
-server/routers/featureToggles.ts
-server/routers/index.ts
-server/routers/notifications.ts
-server/routers/profile.ts
-server/routers/projects.ts
-server/routers/reports.ts
-server/routers/settings.ts
-server/routers/shared.ts
-server/routers/slipBlinds.ts
-server/routers/workflowRuntime.ts
-server/routers/workflows.ts
-server/routers.ts
-server/settings.extended.test.ts
-server/settings.test.ts
-server/slipBlinds.test.ts
-server/sprint3.contract.test.ts
-server/sprint4.contract.test.ts
-server/storage.ts
-server/workflow.contract.test.ts
-server/workflow.ordering.test.ts
-server/workflowRuntime.logic.test.ts
-server/workflowSpecification.test.ts
-shared/_core/errors.ts
-shared/blindBulkPaste.ts
-shared/const.ts
-shared/electronicApprovals.ts
-shared/pdfExports.ts
-shared/types.ts
-shared/workflowRuntime.ts
-shared/workflowSpecification.ts
-tsconfig.json
-tsconfig.node.json
-vite.config.ts
-vitest.config.ts
+Edit/copy source files in the fixed master folder
+→ 02_PUSH_UPDATE.cmd
+→ GitHub main
+→ Railway Auto Deploy
 ```

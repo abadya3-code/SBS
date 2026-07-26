@@ -1,11 +1,12 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "buildCommand": "corepack enable && corepack prepare pnpm@10.4.1 --activate && pnpm railway:build"
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "preDeployCommand": "corepack enable && corepack prepare pnpm@10.4.1 --activate && pnpm railway:predeploy",
-    "startCommand": "NODE_ENV=production node dist/index.js",
+    "preDeployCommand": "pnpm railway:predeploy",
+    "startCommand": "node dist/index.js",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 180,
     "restartPolicyType": "ON_FAILURE",

@@ -195,7 +195,7 @@ export async function getSecuritySettings() {
       maxLoginAttempts: 5,
       lockoutDurationMinutes: 15,
       requireStrongPassword: 1,
-      minPasswordLength: 8,
+      minPasswordLength: 12,
       updatedByOpenId: null as string | null,
       createdAt: new Date(),
       updatedAt: new Date(),

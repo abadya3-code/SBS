@@ -30,11 +30,11 @@ const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserI
 
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
-    console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
-    if (!ENV.oAuthServerUrl) {
-      console.error(
-        "[OAuth] ERROR: OAUTH_SERVER_URL is not configured! Set OAUTH_SERVER_URL environment variable."
-      );
+    if (ENV.oAuthEnabled) {
+      if (!ENV.oAuthServerUrl) {
+        throw new Error("ENABLE_OAUTH=true requires OAUTH_SERVER_URL.");
+      }
+      console.info("[OAuth] External OAuth integration enabled.");
     }
   }
 
@@ -122,6 +122,7 @@ class SDKServer {
     code: string,
     state: string
   ): Promise<ExchangeTokenResponse> {
+    if (!ENV.oAuthEnabled) throw new Error("OAuth integration is disabled.");
     return this.oauthService.getTokenByCode(code, state);
   }
 
@@ -131,6 +132,7 @@ class SDKServer {
    * const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
    */
   async getUserInfo(accessToken: string): Promise<GetUserInfoResponse> {
+    if (!ENV.oAuthEnabled) throw new Error("OAuth integration is disabled.");
     const data = await this.oauthService.getUserInfoByToken({
       accessToken,
     } as ExchangeTokenResponse);
@@ -156,6 +158,9 @@ class SDKServer {
 
   private getSessionSecret() {
     const secret = ENV.cookieSecret;
+    if (secret.length < 32) {
+      throw new Error("JWT_SECRET must contain at least 32 characters.");
+    }
     return new TextEncoder().encode(secret);
   }
 
@@ -172,7 +177,7 @@ class SDKServer {
       {
         openId,
         appId: ENV.appId,
-        name: options.name || "",
+        name: options.name?.trim() || "SBTS User",
       },
       options
     );
@@ -193,6 +198,8 @@ class SDKServer {
       name: payload.name,
     })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+      .setSubject(payload.openId)
+      .setIssuedAt(Math.floor(issuedAt / 1000))
       .setExpirationTime(expirationSeconds)
       .sign(secretKey);
   }
@@ -201,7 +208,8 @@ class SDKServer {
     cookieValue: string | undefined | null
   ): Promise<{ openId: string; appId: string; name: string } | null> {
     if (!cookieValue) {
-      console.warn("[Auth] Missing session cookie");
+      // Anonymous/public requests are expected before login. Avoid noisy error
+      // logs while still returning a null session to the tRPC context.
       return null;
     }
 
@@ -213,15 +221,18 @@ class SDKServer {
       const { openId, appId, name } = payload as Record<string, unknown>;
 
       if (!isNonEmptyString(openId)) {
-  console.warn("[Auth] Session payload missing openId");
-  return null;
-}
+        console.warn("[Auth] Session payload missing openId");
+        return null;
+      }
 
-return {
-  openId,
-  appId: isNonEmptyString(appId) ? appId : ENV.appId,
-  name: isNonEmptyString(name) ? name : "SBTS User",
-};
+      // Backward-compatible fallback for cookies created by early standalone
+      // releases where appId/name could be empty. A fresh cookie is issued on
+      // the next successful login.
+      return {
+        openId,
+        appId: isNonEmptyString(appId) ? appId : ENV.appId,
+        name: isNonEmptyString(name) ? name : "SBTS User",
+      };
     } catch (error) {
       console.warn("[Auth] Session verification failed", String(error));
       return null;

@@ -415,3 +415,25 @@
 - Quality review actions cannot be triggered during React render.
 - Defect, punch and NDT review paths reject stale record versions and self-approval where independence is required.
 - Domain migrations are no longer silently skipped by relying only on the Drizzle journal.
+
+## 2.1.0-rc.1 — Clean production/deployment hardening
+
+- Fixed standalone session payloads with a non-empty application ID and legacy-cookie fallback.
+- Changed same-origin session cookies to secure `SameSite=Lax` behavior behind Railway/reverse proxies.
+- Made Admin bootstrap idempotently create or reset the configured administrator password.
+- Added deployment environment validation with actionable `DATABASE_URL` errors.
+- Added account lockout fields and database-backed failed-login enforcement.
+- Added migration `0017_sprint5_auth_deployment_hardening.sql`.
+- Added a provider-neutral Dockerfile and configured Railway to use it.
+- Removed duplicate package installation from Railway builds and improved cache reuse.
+- Disabled legacy OAuth error noise unless OAuth is explicitly enabled.
+- Added basic production security headers, request IDs, and readiness checks.
+
+## 2.1.0 — Clean portable release
+
+- Added a production doctor that verifies database schema, administrator password, account status and JWT session round-trip before a revision can start.
+- Fixed stale `auth.me` client cache after successful email/password login.
+- Silenced expected anonymous-session log noise while retaining invalid-token diagnostics.
+- Added duplicate-email preflight and clearer statement-level migration errors.
+- Corrected Docker dependency installation so Vite, TypeScript, Drizzle and pre-deploy tooling remain available during build and migration.
+- Added portable hosting and final Railway documentation.

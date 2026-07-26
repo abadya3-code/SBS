@@ -9,39 +9,61 @@ import {
 import { requireDb } from "../server/db/core";
 import { seedAccessControl, seedWorkflows } from "../server/db/seed";
 
+function requireStrongPassword(password: string) {
+  if (password.length < 12) {
+    throw new Error("ADMIN_PASSWORD must be at least 12 characters.");
+  }
+  if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+    throw new Error(
+      "ADMIN_PASSWORD must contain uppercase, lowercase, number, and special character.",
+    );
+  }
+}
+
 async function main() {
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  const password = process.env.ADMIN_PASSWORD;
+  const password = process.env.ADMIN_PASSWORD ?? "";
   const name = process.env.ADMIN_NAME?.trim() || "SBTS Administrator";
+  const employeeNumber =
+    process.env.ADMIN_EMPLOYEE_NUMBER?.trim() || "SBTS-ADMIN";
+
   if (!email || !password) {
-    throw new Error("Set ADMIN_EMAIL and ADMIN_PASSWORD before running pnpm admin:create.");
+    throw new Error(
+      "Set ADMIN_EMAIL and ADMIN_PASSWORD before running pnpm admin:create.",
+    );
   }
-  if (password.length < 12) throw new Error("ADMIN_PASSWORD must be at least 12 characters.");
+  requireStrongPassword(password);
 
   await seedAccessControl();
   await seedWorkflows();
+
   const existing = await getUserByEmail(email);
   if (existing) {
-  const db = await requireDb();
+    const db = await requireDb();
 
-  await updateUserPassword(existing.openId, password);
+    // Bootstrap is intentionally idempotent: when enabled for a deployment it
+    // resets the configured administrator password and clears lockout state.
+    await updateUserPassword(existing.openId, password);
+    await db
+      .update(users)
+      .set({
+        role: "admin",
+        userStatus: "active",
+        loginMethod: "email",
+        name,
+        employeeNumber,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        approvedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.openId, existing.openId));
 
-  await db
-    .update(users)
-    .set({
-      role: "admin",
-      userStatus: "active",
-      name,
-      approvedAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .where(eq(users.openId, existing.openId));
-
-  console.log(
-    `Existing account ${email} activated as admin and password reset successfully.`,
-  );
-  return;
-}
+    console.log(
+      `ADMIN_BOOTSTRAP_RESET_OK email=${email} commit=${process.env.RAILWAY_GIT_COMMIT_SHA ?? "local"}`,
+    );
+    return;
+  }
 
   await createUserWithPassword({
     name,
@@ -51,13 +73,19 @@ async function main() {
     userStatus: "active",
     department: "System Administration",
     specialty: "Application Administration",
-    employeeNumber: process.env.ADMIN_EMPLOYEE_NUMBER || "SBTS-ADMIN",
+    employeeNumber,
     createdByOpenId: "deployment-bootstrap",
   });
-  console.log(`Admin account ${email} created.`);
+
+  console.log(
+    `ADMIN_BOOTSTRAP_CREATED_OK email=${email} commit=${process.env.RAILWAY_GIT_COMMIT_SHA ?? "local"}`,
+  );
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
+  console.error(
+    "ADMIN_BOOTSTRAP_FAILED:",
+    error instanceof Error ? error.message : error,
+  );
   process.exit(1);
 });

@@ -37,6 +37,7 @@ jobs:
           pnpm sprint2:verify
           pnpm sprint3:verify
           pnpm sprint4:verify
+          pnpm sprint5:verify
 
       - name: TypeScript
         run: pnpm check

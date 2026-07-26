@@ -362,7 +362,7 @@ export const settingsRouter = router({
       maxLoginAttempts: z.number().int().min(3).max(20).optional(),
       lockoutDurationMinutes: z.number().int().min(5).max(60).optional(),
       requireStrongPassword: z.boolean().optional(),
-      minPasswordLength: z.number().int().min(6).max(32).optional(),
+      minPasswordLength: z.number().int().min(8).max(64).optional(),
     })).mutation(async ({ input, ctx }) => {
       const data: Record<string, unknown> = {};
       const boolFields = ["qrPublicAccess", "qrRequireAuth", "allowDeleteBlinds", "allowDeleteProjects", "requireDeleteConfirmation", "auditTrailEnabled", "requireStrongPassword"] as const;

@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
 if (-not (Test-Path ".git")) {
-  throw "Git metadata is missing. Run 01_CONNECT_GITHUB_ONCE.cmd first."
+  throw "Git metadata is missing. Run 01_CONNECT_GITHUB_ONCE.cmd first or open the existing Git clone."
 }
 
 $branch = git branch --show-current

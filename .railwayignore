@@ -1,21 +1,14 @@
-# Documentation and local-only files
-docs/
-.github/
-*.md
-!README.md
-*.patch
-*.pdf
-
-# Local development
-docker-compose.local.yml
-.env*
-!.env.example
 .git/
+.env
+.env.*
+!.env.example
 node_modules/
-**/node_modules/
+dist/
 coverage/
+*.log
+*.zip
+*.tgz
 .vscode/
 .idea/
-
-*.cmd
-*.ps1
+.webdev/
+client/public/__manus__/

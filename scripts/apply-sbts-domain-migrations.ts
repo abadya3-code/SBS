@@ -3,9 +3,12 @@ import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import mysql from "mysql2/promise";
+import { getDatabaseUrl } from "../server/_core/databaseUrl";
 
-const databaseUrl = process.env.DATABASE_URL?.trim();
-if (!databaseUrl) throw new Error("DATABASE_URL is required.");
+const databaseUrl = getDatabaseUrl(process.env.DATABASE_URL, {
+  required: true,
+  production: process.env.NODE_ENV === "production",
+})!;
 
 const root = process.cwd();
 const migrationDirectory = path.join(root, "drizzle");
@@ -155,6 +158,23 @@ async function main() {
         continue;
       }
 
+      if (file === "0017_sprint5_auth_deployment_hardening.sql") {
+        const [duplicateEmails] = await connection.query<mysql.RowDataPacket[]>(
+          `SELECT LOWER(TRIM(email)) AS normalizedEmail, COUNT(*) AS duplicateCount
+             FROM users
+            WHERE email IS NOT NULL AND TRIM(email) <> ''
+            GROUP BY LOWER(TRIM(email))
+           HAVING COUNT(*) > 1
+            LIMIT 10`,
+        );
+        if (duplicateEmails.length) {
+          const values = duplicateEmails.map((row) => String(row.normalizedEmail)).join(", ");
+          throw new Error(
+            `Migration ${file} cannot create the unique email index because duplicate accounts exist: ${values}. Resolve duplicates before deployment.`,
+          );
+        }
+      }
+
       const statements = splitSqlStatements(sql);
       if (!statements.length) throw new Error(`Migration ${file} has no executable statements.`);
       const [stepRows] = await connection.query<mysql.RowDataPacket[]>(
@@ -176,7 +196,12 @@ async function main() {
           continue;
         }
 
-        await connection.query(statement);
+        try {
+          await connection.query(statement);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          throw new Error(`Migration ${file}, statement ${statementIndex + 1} failed: ${message}`);
+        }
         await connection.execute(
           "INSERT INTO sbts_domain_migration_steps (migrationName, statementIndex, statementChecksum) VALUES (?, ?, ?)",
           [file, statementIndex, statementChecksum],

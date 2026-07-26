@@ -98,6 +98,9 @@ export async function createUserWithPassword(input: CreateUserInput) {
     approvedByOpenId: input.createdByOpenId ?? null,
     approvedAt: input.userStatus === "active" ? now : null,
     passwordHash,
+    failedLoginAttempts: 0,
+    lockedUntil: null,
+    passwordChangedAt: now,
     createdAt: now,
     updatedAt: now,
     lastSignedIn: now,
@@ -122,6 +125,46 @@ export async function updateUserPassword(
   const passwordHash = await hashPassword(newPassword);
   await db
     .update(users)
-    .set({ passwordHash, updatedAt: new Date() })
+    .set({
+      passwordHash,
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+      passwordChangedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(users.openId, openId));
+}
+
+
+/** Record a failed password attempt and lock the account when the policy limit is reached. */
+export async function recordFailedLogin(
+  openId: string,
+  currentAttempts: number,
+  maxAttempts: number,
+  lockoutDurationMinutes: number,
+): Promise<{ lockedUntil: Date | null; attempts: number }> {
+  const db = await requireDb();
+  const attempts = Math.max(0, currentAttempts) + 1;
+  const shouldLock = attempts >= Math.max(1, maxAttempts);
+  const lockedUntil = shouldLock
+    ? new Date(Date.now() + Math.max(1, lockoutDurationMinutes) * 60_000)
+    : null;
+  await db
+    .update(users)
+    .set({
+      failedLoginAttempts: shouldLock ? 0 : attempts,
+      lockedUntil,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.openId, openId));
+  return { lockedUntil, attempts };
+}
+
+/** Clear lockout counters after a successful login or administrator reset. */
+export async function clearFailedLogin(openId: string): Promise<void> {
+  const db = await requireDb();
+  await db
+    .update(users)
+    .set({ failedLoginAttempts: 0, lockedUntil: null, updatedAt: new Date() })
     .where(eq(users.openId, openId));
 }

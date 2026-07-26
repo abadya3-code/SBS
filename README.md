@@ -1,123 +1,100 @@
-# SBTS Master — GitHub & Railway Ready
+# SBTS 2.1 — Smart Blind Tag System
 
-Open `START_HERE_AR.md`. This package includes initialized Git metadata and one-time/future update scripts for the existing `abadya3-code/SBS` repository.
+SBTS is a full-stack isolation assurance application for plant blinding and de-blinding work. It combines the eight-phase engineering workflow with PTW/LOTO, gas testing, torque, inspection, defect/punch/NDT governance, approvals, audit history and controlled certificates.
 
-# SBTS — Smart Blind Tag System
+## Clean release
 
-نظام متكامل لإدارة أعمال **Blinding / De-blinding** في الخزانات والأوعية والمعدات، مع Workflow هندسي، PTW/LOTO، Gas Test، Torque، Inspection، Defect/Punch/NDT، الموافقات والشهادات.
+This source package is designed for:
 
-## النسخة
+- GitHub version control and automatic deployments.
+- Railway using the included `Dockerfile` and `railway.json`.
+- Any Docker-compatible host with Node.js 22 and MySQL 8/TiDB.
+- S3-compatible evidence storage when file uploads are enabled.
 
-`2.0.0-beta.4-railway-ready`
+The package intentionally excludes `.git`, `.env`, `node_modules`, `dist` and credentials.
 
-> هذه نسخة Staging / Pilot. لا تعتمد للاستخدام التشغيلي النهائي في المعمل قبل إكمال UAT واعتماد إجراءات الموقع.
+## Stack
 
-## التقنية
-
-- React + TypeScript + Vite
+- React 19 + TypeScript + Vite
 - Express + tRPC
-- Drizzle ORM
-- MySQL / TiDB
-- S3-compatible object storage
-- Railway-ready configuration
+- Drizzle ORM + MySQL/TiDB
+- Vitest
+- Docker + Railway Config-as-Code
+- Optional S3-compatible storage
 
-## تشغيل سريع محليًا
+## Deployment safety controls
 
-### المتطلبات
+The Railway pre-deploy sequence is:
 
-- Node.js 22
-- Git
-- Docker Desktop
-- Corepack / pnpm
+```text
+Environment validation
+→ Drizzle migrations
+→ SBTS domain migrations
+→ Optional admin create/reset
+→ Production doctor
+→ Start application
+→ /health check
+```
+
+The production doctor verifies the database schema, Sprint 5 migration, an active password-enabled administrator, the configured admin password after bootstrap, and a JWT session round-trip. A failed check stops the new deployment before it replaces the active revision.
+
+## Start here
+
+- Arabic quick start: `START_HERE_AR.md`
+- Railway setup: `RAILWAY_SETUP_AR.md`
+- Portable hosting: `HOSTING_PORTABILITY.md`
+- Engineering release report: `SBTS_2.1_CLEAN_RELEASE_REPORT_AR.md`
+
+## Repository workflow
+
+First connection on Windows:
+
+```text
+01_CONNECT_GITHUB_ONCE.cmd
+```
+
+Later updates:
+
+```text
+02_PUSH_UPDATE.cmd
+```
+
+Or use Git directly:
 
 ```bash
-corepack enable
-corepack prepare pnpm@10.4.1 --activate
-pnpm install --frozen-lockfile
-cp .env.example .env
-# Windows PowerShell: Copy-Item .env.example .env
-
-docker compose -f docker-compose.local.yml up -d
-pnpm db:migrate
-pnpm admin:create
-pnpm dev
+git add .
+git commit -m "Describe the SBTS update"
+git push origin main
 ```
 
-افتح: `http://localhost:3000`
-
-## رفع GitHub
-
-المستودع المعد لهذه النسخة:
-
-```text
-https://github.com/abadya3-code/SBS.git
-```
-
-في Windows شغّل:
-
-```text
-01_UPLOAD_TO_GITHUB.cmd
-```
-
-أو استخدم الأوامر الموجودة في:
-
-- `DEPLOY_GITHUB_RAILWAY_AR.md`
-
-## Railway
-
-الملف `railway.json` يحدد تلقائيًا:
-
-- Build command
-- Database migrations قبل التشغيل
-- إنشاء أول Admin اختياريًا
-- Start command
-- Health check على `/health`
-
-لأول تجربة تحتاج على Railway:
-
-1. خدمة التطبيق من مستودع GitHub.
-2. خدمة MySQL.
-3. `DATABASE_URL` كـReference إلى `MYSQL_URL`.
-4. `JWT_SECRET` قوي.
-5. بيانات أول Admin.
-6. `BOOTSTRAP_ADMIN_ON_DEPLOY=true` لأول نشر فقط.
-7. يمكن البدء بـ`STORAGE_REQUIRED=false` ثم إضافة Railway Bucket لاحقًا.
-
-التفاصيل الكاملة في [DEPLOY_GITHUB_RAILWAY_AR.md](DEPLOY_GITHUB_RAILWAY_AR.md).
-
-## فحوصات المشروع
+## Verification commands
 
 ```bash
 pnpm release:check
+pnpm sprint2:verify
+pnpm sprint3:verify
+pnpm sprint4:verify
+pnpm sprint5:verify
 pnpm check
 pnpm test
 pnpm build
 ```
 
-## Health endpoints
+The static release checks can run without a database. Full typecheck, Vitest and build require installed locked dependencies.
 
-```text
-GET /health
-GET /ready
-```
+## Runtime endpoints
 
-- `/health`: التطبيق يعمل.
-- `/ready`: التطبيق متصل بقاعدة البيانات.
+- `GET /health` — process liveness
+- `GET /ready` — database readiness
 
-## المجلدات الرئيسية
+## Security reminders
 
-```text
-client/      واجهة React
-server/      Express وtRPC ومنطق الخادم
-shared/      الأنواع ومواصفات Workflow المشتركة
-drizzle/     Schema وMigrations
-scripts/     Migration/verification/admin scripts
-docs/        التقارير الهندسية وخطط الاختبار
-```
+- Never commit `.env` or paste secrets into source code.
+- Use a fixed `JWT_SECRET` of at least 32 characters; changing it invalidates all sessions.
+- Enable `BOOTSTRAP_ADMIN_ON_DEPLOY=true` only for the first admin creation or a controlled password reset.
+- After a successful login, set bootstrap to false and remove `ADMIN_PASSWORD` from hosted variables.
+- Keep the repository private during development and plant pilot.
 
-## الأمان
+## Release boundary
 
-- لا ترفع ملف `.env` إلى GitHub.
-- لا تضع كلمات المرور أو مفاتيح Railway داخل الكود.
-- بعد إنشاء أول Admin احذف `ADMIN_PASSWORD` من Railway Variables وعطّل `BOOTSTRAP_ADMIN_ON_DEPLOY`.
-- يفضل جعل مستودع GitHub **Private** خلال مرحلة التطوير والـPilot.
+This is a production-oriented clean source release, but plant operational approval still requires role-based UAT, cybersecurity review, backup/restore verification and formal Operations/Maintenance/Inspection/Safety sign-off.

@@ -15,6 +15,7 @@ import { toast } from "sonner";
 
 export default function Login() {
   const { user, loading } = useAuth();
+  const utils = trpc.useUtils();
   const [, setLocation] = useLocation();
 
   const [email, setEmail] = useState("");
@@ -34,7 +35,11 @@ export default function Login() {
   }, [user, loading, setLocation]);
 
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: ({ user: loggedUser }) => {
+    onSuccess: async ({ user: loggedUser }) => {
+      // The login page queried auth.me before the session cookie existed. Update
+      // that cache immediately so the dashboard does not reuse a stale null user.
+      utils.auth.me.setData(undefined, loggedUser as any);
+      await utils.auth.me.invalidate();
       const status = (loggedUser as any).userStatus;
       if (status === "pending" || status === "rejected") {
         setLocation("/approve");
